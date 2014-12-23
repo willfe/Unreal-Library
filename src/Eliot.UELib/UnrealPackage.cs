@@ -168,34 +168,39 @@ namespace UELib
             [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
             private sealed class BuildAttribute : Attribute
             {
+                [Flags]
+                public enum Flags
+                {
+                    None = 0x00,
+                    ConsoleCompressed = 0x01,
+                    NotConsoleCompressed = 0x02,
+                    XenonCompressed = 0x04,
+                    NotXenonCompressed = 0x08
+                }
+
                 private readonly int _MinVersion;
                 private readonly int _MaxVersion;
                 private readonly uint _MinLicensee;
-                private readonly byte _IsConsoleCompressed;
-                private readonly byte _IsXenonCompressed;
                 private readonly uint _MaxLicensee;
+                private readonly Flags _Flags;
 
                 private readonly bool _VerifyEqual;
 
-                public BuildAttribute( int minVersion, uint minLicensee,
-                    byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+                public BuildAttribute( int minVersion, uint minLicensee, Flags flags = Flags.None )
                 {
                     _MinVersion = minVersion;
                     _MinLicensee = minLicensee;
-                    _IsConsoleCompressed = isConsoleCompressed;
-                    _IsXenonCompressed = isXenonCompressed;
+                    _Flags = flags;
                     _VerifyEqual = true;
                 }
 
-                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee,
-                    byte isConsoleCompressed = 2, byte isXenonCompressed = 2 )
+                public BuildAttribute( int minVersion, int maxVersion, uint minLicensee, uint maxLicensee, Flags flags = Flags.None )
                 {
                     _MinVersion = minVersion;
                     _MaxVersion = maxVersion;
                     _MinLicensee = minLicensee;
                     _MaxLicensee = maxLicensee;
-                    _IsConsoleCompressed = isConsoleCompressed;
-                    _IsXenonCompressed = isXenonCompressed;
+                    _Flags = flags;
                 }
 
                 public bool Verify( GameBuild gb, UnrealPackage package )
@@ -209,15 +214,24 @@ namespace UELib
                     gb.Version = package.Version;
                     gb.LicenseeVersion = package.LicenseeVersion;
 
-                    if( _IsConsoleCompressed < 2 )
+                    if( (_Flags & Flags.ConsoleCompressed) == Flags.ConsoleCompressed )
                     {
-                        gb.IsConsoleCompressed = _IsConsoleCompressed == 1;
+                        gb.IsConsoleCompressed = true;
+                    }
+                    else if( (_Flags & Flags.NotConsoleCompressed) == Flags.NotConsoleCompressed )
+                    {
+                        gb.IsConsoleCompressed = false;
                     }
 
-                    if( _IsXenonCompressed < 2 )
+                    if( (_Flags & Flags.XenonCompressed) == Flags.XenonCompressed )
                     {
-                        gb.IsXenonCompressed = _IsXenonCompressed == 1;
+                        gb.IsXenonCompressed = true;
                     }
+                    else if( (_Flags & Flags.NotXenonCompressed) == Flags.NotXenonCompressed )
+                    {
+                        gb.IsXenonCompressed = false;
+                    }
+
                     return true;
                 }
             }
@@ -285,7 +299,7 @@ namespace UELib
                 /// <summary>
                 /// 130:143/056:059
                 /// </summary>
-                [Build( 130, 143, 56u, 59u, 0, 0 )]
+                [Build( 130, 143, 56u, 59u, BuildAttribute.Flags.NotConsoleCompressed | BuildAttribute.Flags.NotXenonCompressed )]
                 Bioshock,
 
                 // IrrationalGames - 129:143/027:059
@@ -305,7 +319,7 @@ namespace UELib
                 /// <summary>
                 /// 472/046
                 /// </summary>
-                [Build( 472, 46, 1 )]
+                [Build( 472, 46, BuildAttribute.Flags.ConsoleCompressed )]
                 MKKE,
 
                 /// <summary>
@@ -341,7 +355,7 @@ namespace UELib
                 /// <summary>
                 /// 575/000
                 /// </summary>
-                [Build( 575, 0, 0, 1 )]
+                [Build( 575, 0, BuildAttribute.Flags.NotConsoleCompressed | BuildAttribute.Flags.XenonCompressed )]
                 GoW2,
 
                 /// <summary>
@@ -371,7 +385,7 @@ namespace UELib
                 /// <summary>
                 /// 590/001
                 /// </summary>
-                [Build( 590, 1, 0, 1 )]
+                [Build( 590, 1, BuildAttribute.Flags.NotConsoleCompressed | BuildAttribute.Flags.XenonCompressed )]
                 ShadowComplex,
 
                 /// <summary>
@@ -425,7 +439,7 @@ namespace UELib
                 /// <summary>
                 /// 842/001
                 /// </summary>
-                [Build( 842, 1, 1 )]
+                [Build( 842, 1, BuildAttribute.Flags.ConsoleCompressed )]
                 InfinityBlade2,
 
                 /// <summary>
@@ -443,7 +457,7 @@ namespace UELib
                 /// <summary>
                 /// 904/009
                 /// </summary>
-                [Build( 904, 904, 9u, 9u, 0, 0 )]
+                [Build( 904, 904, 9u, 9u, BuildAttribute.Flags.NotConsoleCompressed | BuildAttribute.Flags.NotXenonCompressed )]
                 SpecialForce2
             }
 
