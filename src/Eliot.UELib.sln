@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib", "Eliot.UELib.csproj", "{7E45273F-434F-42FA-8269-0E760AEB41E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib", "Eliot.UELib\Eliot.UELib.csproj", "{7E45273F-434F-42FA-8269-0E760AEB41E1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eliot.UELib.Cmd", "Eliot.UELib.Cmd\Eliot.UELib.Cmd.csproj", "{01B07425-0B35-4DAB-9555-D61261A0F161}"
 EndProject
