@@ -32,7 +32,7 @@ namespace UELib
         /// Loads the given file specified by PackagePath and
         /// returns the serialized UnrealPackage.
         /// </summary>
-        public static UnrealPackage LoadPackage( string packagePath, IBufferDecoder decoder = null, FileAccess fileAccess = FileAccess.Read )
+        public static UnrealPackage LoadPackage( string packagePath, IBufferDecoder decoder, FileAccess fileAccess = FileAccess.Read )
         {
             var stream = new UPackageStream( packagePath, FileMode.Open, fileAccess );
             var package = new UnrealPackage( stream ) {Decoder = decoder};
