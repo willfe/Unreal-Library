@@ -603,6 +603,7 @@ namespace UELib.Core
                     case PropertyType.PointerProperty:
                     case PropertyType.StructProperty:
                         {
+                            var propOutput = new StringBuilder();
                             deserializeFlags |= DeserializeFlags.WithinStruct;
                             bool isHardCoded = false;
                             var hardcodedStructs = (PropertyType[])Enum.GetValues( typeof( PropertyType ) );
@@ -613,7 +614,7 @@ namespace UELib.Core
                                     continue;
 
                                 isHardCoded = true;
-                                propertyValue += DeserializeDefaultPropertyValue( hardcodedStructs[i], ref deserializeFlags );
+                                propOutput.Append( DeserializeDefaultPropertyValue( hardcodedStructs[i], ref deserializeFlags ) );
                                 break;
                             }
 
@@ -622,27 +623,31 @@ namespace UELib.Core
                                 // We have to modify the outer so that dynamic arrays within this struct
                                 // will be able to find its variables to determine the array type.
                                 FindProperty( out _Outer );
+                                var hasProps = false;
                                 while( true )
                                 {
                                     var tag = new UDefaultProperty( _Container, _Outer );
-                                    if( tag.Deserialize() )
-                                    {
-                                        propertyValue += tag.Name +
-                                            (tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty
-                                            ? "[" + tag.ArrayIndex + "]" : String.Empty) +
-                                                "=" + tag.DeserializeValue( deserializeFlags ) + ",";
-                                    }
-                                    else
-                                    {
-                                        if( propertyValue.EndsWith( "," ) )
-                                        {
-                                            propertyValue = propertyValue.Remove( propertyValue.Length - 1, 1 );
-                                        }
+                                    if( !tag.Deserialize() )
                                         break;
-                                    }
+
+                                    if( hasProps )
+                                        propOutput.Append( "," );
+
+                                    hasProps = true;
+                                    propOutput.Append( tag.Name );
+                                    if( tag.ArrayIndex > 0 && tag.Type != PropertyType.BoolProperty )
+                                        propOutput.Append( "[" + tag.ArrayIndex + "]" );
+                                    propOutput.Append( "=" );
+                                    propOutput.Append( tag.DeserializeValue( deserializeFlags ) ); // value
                                 }
                             }
-                            propertyValue = propertyValue.Length != 0 ? "(" + propertyValue + ")" : "none";
+
+                            if( propOutput.Length == 0 )
+                            {
+                                propertyValue = "none";
+                                break;
+                            }
+                            propertyValue = "(" + propOutput + ")";
                             break;
                         }
 
