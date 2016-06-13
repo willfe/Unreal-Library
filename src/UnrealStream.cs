@@ -145,6 +145,11 @@ namespace UELib
         [System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes" )]
         private IUnrealStream _UnrealStream;
 
+        private bool _IsLittleEndian
+        {
+            get { return !_UnrealStream.BigEndianCode; } 
+        }
+
         private uint _Version
         {
             get{ return _UnrealStream.Version; }
@@ -171,7 +176,7 @@ namespace UELib
             // Very old packages use a simple Ansi encoding.
             if( _Version < UnrealPackage.VSIZEPREFIXDEPRECATED )
             {
-                return ReadAnsi();
+                return this.ReadStringA();
             }
 
             byte[] strBytes;
@@ -244,39 +249,12 @@ namespace UELib
 
         public string ReadAnsi()
         {
-            var strBytes = new List<byte>();
-            nextChar:
-                var BYTE = ReadByte();
-                if( BYTE != '\0' )
-                {
-                    strBytes.Add( BYTE );
-                    goto nextChar;
-                }
-            var s = Encoding.UTF8.GetString( strBytes.ToArray() );
-            if( _UnrealStream.BigEndianCode )
-            {
-                Enumerable.Reverse( s );
-            }
-            return s;
+            return this.ReadStringA( _IsLittleEndian );
         }
 
         public string ReadUnicode()
         {
-            var strBytes = new List<byte>();
-            nextWord:
-                var w = ReadUInt16();
-                if( w != 0 )
-                {
-                    strBytes.Add( (byte)(w & 0xFF00) );
-                    strBytes.Add( (byte)(w & 0x00FF) );
-                    goto nextWord;
-                }
-            var s = Encoding.Unicode.GetString( strBytes.ToArray() );
-            if( _UnrealStream.BigEndianCode )
-            {
-                Enumerable.Reverse( s );
-            }
-            return s;
+            return this.ReadStringW( _IsLittleEndian );
         }
 
         public int ReadIndex()
