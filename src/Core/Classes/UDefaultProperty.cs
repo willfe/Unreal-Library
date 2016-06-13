@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using UELib.Types;
 
 namespace UELib.Core
@@ -647,9 +648,9 @@ namespace UELib.Core
 
                     case PropertyType.ArrayProperty:
                         {
-                            int arraySize = _Buffer.ReadIndex();
-                            _Container.Record( "arraySize", arraySize );
-                            if( arraySize == 0 )
+                            int count = _Buffer.ReadIndex();
+                            _Container.Record( "arraySize", count );
+                            if( count == 0 )
                             {
                                 propertyValue = "none";
                                 break;
@@ -681,42 +682,49 @@ namespace UELib.Core
                                 break;
                             }
 
+                            var propOutput = new StringBuilder();
                             deserializeFlags |= DeserializeFlags.WithinArray;
                             if( (deserializeFlags & DeserializeFlags.WithinStruct) != 0 )
                             {
-                                // Hardcoded fix for InterpCurve and InterpCurvePoint.
+                                // HACK: Hardcoded fix for InterpCurve and InterpCurvePoint.
                                 if( String.Compare( Name, "Points", StringComparison.OrdinalIgnoreCase ) == 0 )
                                 {
                                     arrayType = PropertyType.StructProperty;
                                 }
-
-                                for( int i = 0; i < arraySize; ++ i )
+                                propOutput.Append( "(" );
+                                for( int i = 0; i < count; ++ i )
                                 {
-                                    propertyValue += DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags )
-                                        + (i != arraySize - 1 ? "," : String.Empty);
+                                    // ={value}
+                                    propOutput.Append( DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags ) );
+                                    if( i != count - 1 ) // if not last
+                                        propOutput.Append( "," );
                                 }
-                                propertyValue = "(" + propertyValue + ")";
+                                propOutput.Append( ")" );
+                                propertyValue = propOutput.ToString();
                             }
                             else
                             {
-                                for( int i = 0; i < arraySize; ++ i )
+                                for( int i = 0; i < count; ++ i )
                                 {
+                                    string element =  Name + "(" + i + ")";
                                     string elementValue = DeserializeDefaultPropertyValue( arrayType, ref deserializeFlags );
                                     if( (_TempFlags & ReplaceNameMarker) != 0 )
                                     {
-                                        propertyValue += elementValue.Replace( "%ARRAYNAME%", Name + "(" + i + ")" );
+                                        propOutput.Append( elementValue.Replace( "%ARRAYNAME%", element ) );
                                         _TempFlags = 0x00;
                                     }
                                     else
                                     {
-                                        propertyValue += Name + "(" + i + ")=" + elementValue;
+                                        propOutput.Append( element + "=" );
+                                        propOutput.Append( elementValue );
                                     }
 
-                                    if( i != arraySize - 1 )
+                                    if( i != count - 1 ) // if not last
                                     {
-                                        propertyValue += "\r\n" + UDecompilingState.Tabs;
+                                        propOutput.Append( "\r\n" + UDecompilingState.Tabs );
                                     }
                                 }
+                                propertyValue = propOutput.ToString();
                             }
 
                             _TempFlags |= DoNotAppendName;
