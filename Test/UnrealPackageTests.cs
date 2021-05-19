@@ -16,13 +16,14 @@ namespace UELib.Test
             Assert.IsNotNull(package);
 
             // FIXME: UELib is dependent on WinForms
-            //package.InitializePackage();
+            // (No longer an issue with Net 5.0, but we should still refactor the library to be independant)
+            package.InitializePackage();
 
-            //var testClass = package.FindObject("Test", typeof(UClass));
-            //Assert.IsNotNull(testClass);
+            var testClass = package.FindObject("Test", typeof(UClass));
+            Assert.IsNotNull(testClass);
 
-            //string testClassContent = testClass.Decompile();
-            //Assert.AreNotSame("", testClassContent);
+            string testClassContent = testClass.Decompile();
+            Assert.AreNotSame("", testClassContent);
         }
     }
 }
