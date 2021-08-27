@@ -159,8 +159,11 @@ namespace UELib.Core
                 const int vHideCategoriesOldOrder = 539;
                 var isHideCategoriesOldOrder = Package.Version <= vHideCategoriesOldOrder
 #if TERA
-                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera 
-#endif           
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Tera
+#endif
+#if TRANSFORMERS
+                            || Package.Build == UnrealPackage.GameBuild.BuildName.Transformers
+#endif
                     ;
 
                 // TODO: Corrigate Version
@@ -179,6 +182,7 @@ namespace UELib.Core
                             DeserializeHideCategories();
                         }
 
+                        // Seems to have been removed in transformer packages
                         DeserializeComponentsMap();
 
                         // RoboBlitz(369)
@@ -191,11 +195,7 @@ namespace UELib.Core
 
                     if( !Package.IsConsoleCooked() && !Package.Build.IsXenonCompressed )
                     {
-                        if( Package.Version >= 603
- #if TERA
-                            && Package.Build != UnrealPackage.GameBuild.BuildName.Tera
-#endif
-                            )
+                        if( Package.Version >= 603 && !isHideCategoriesOldOrder )
                         {
                             DontSortCategories = DeserializeGroup( "DontSortCategories" );
                         }
@@ -216,11 +216,27 @@ namespace UELib.Core
                                 AutoExpandCategories = DeserializeGroup( "AutoExpandCategories" );
                             }
 
-                            if( Package.Version > 670 )
+#if TRANSFORMERS
+                            if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                            {
+
+                                var constructorsCount = _Buffer.ReadInt32();
+                                Record("Constructors.Count", constructorsCount);
+                                if (constructorsCount >= 0)
+                                {
+                                    int numBytes = constructorsCount * 4;
+                                    AssertEOS(numBytes, "Constructors");
+                                    _Buffer.Skip(numBytes);
+                                }
+                                goto skipToDefaultObject;
+                            }
+#endif
+
+                            if ( Package.Version > 670 )
                             {
                                 AutoCollapseCategories = DeserializeGroup( "AutoCollapseCategories" );
 
-                                if( Package.Version >= 749
+                                    if ( Package.Version >= 749
                                     #if SPECIALFORCE2
                                         && Package.Build != UnrealPackage.GameBuild.BuildName.SpecialForce2
                                     #endif
@@ -261,7 +277,7 @@ namespace UELib.Core
                                 }
                             }
 
-                            // FIXME: Found first in(V:655), Definitely not in APB and GoW 2
+                            // FIXME: Found first in(V:655, DLLBind?), Definitely not in APB and GoW 2
                             // TODO: Corrigate Version
                             if( Package.Version > 575 && Package.Version < 674 
 #if TERA
@@ -284,8 +300,17 @@ namespace UELib.Core
 
                     if( Package.Version >= UnrealPackage.VDLLBIND )
                     {
+#if TRANSFORMERS
+                        if (Package.Build == UnrealPackage.GameBuild.BuildName.Transformers)
+                        {
+                            goto skipDLLName;
+                        }
+#endif
+
                         DLLBindName = _Buffer.ReadNameReference();
                         Record( "DLLBindName", DLLBindName );
+
+                        skipDLLName:
 #if REMEMBERME
                         if( Package.Build == UnrealPackage.GameBuild.BuildName.RememberMe )
                         {
@@ -309,6 +334,8 @@ namespace UELib.Core
                     }
                 }
             }
+
+            skipToDefaultObject:
 
             // In later UE3 builds, defaultproperties are stored in separated objects named DEFAULT_namehere,
             // TODO: Corrigate Version
